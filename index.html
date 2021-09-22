@@ -7,11 +7,17 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     </head>
     <body class="container">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <a class="navbar-brand" href="#">Navbar</a>
+            </nav>
+        </div>
         <h3 class="pt-5">
-            Product listing
+            Listing
         </h3>
         <div class="table-responsive">
             <table class="table table-bordered">
+                <caption id="total"></caption>
                 <thead>
                     <tr>
                         <th scope="col">#</th>
@@ -46,7 +52,6 @@
         </div>
     </body>
     <script>
-        // todo cart exercise instead
         // Mock
         let cart = [
             {
@@ -76,31 +81,46 @@
                     name: 'Acer'
                 },
                 categories: ['electronic', 'laptop', 'Gaming laptop']
-            }
+            },
+            {
+                id: 3,
+                name: 'DELL',
+                price: 12000,
+                vat: 20,
+                brand: {
+                    id: 3,
+                    name: 'DELL'
+                },
+                categories: ['electronic', 'laptop', 'Gaming laptop']
+            },
         ]
+        //
+        const cartTBody = document.getElementById('cart-tbody')
+        const cartTFoot = document.getElementById('cart-tfoot')
+        const productTBody = document.getElementById('product-tbody')
+        const productCaption = document.getElementById('total')
+        // Helpers
         const findProductIndex = id => products.findIndex(product=>product.id === id)
+        const findCartElementIndex = id => cart.findIndex(cartElement=>cartElement.productId === id)
         const getProduct = id => {
             const index = findProductIndex(id)
 
             return index !== -1 ? products[index] : undefined
         }
-
-        const cartTBody = document.getElementById('cart-tbody')
-        const cartTFoot = document.getElementById('cart-tfoot')
         const refreshCart = () => {
             cartTBody.innerHTML = ''
 
             cart.forEach(cartElement=>{
                 const {productId, quantity} = cartElement
                 const product = getProduct(productId)
-                const {price, name, brand:{name:brandName}} = product
+                const {name, brand:{name:brandName}} = product
                 cartTBody.innerHTML += (
                     `<tr>
                         <th scope="row">${brandName} ${name}</th>
                         <td>
                             <input type="number" class="form-control form-control-sm" value="${quantity}" min="1" onchange="addToCart(${productId}, parseInt(this.value), true)"/>
                         </td>
-                        <td>${(quantity*getPriceWithVat(product)).toFixed(2)}<sup>MAD</sup></td>
+                        <td>${toCurrency(quantity*getPriceWithVat(product))}</td>
                         <td>
                             <button class="btn btn-outline-success btn-sm w-100" onclick="removeFromCart(${productId})">
                                 Remove
@@ -121,13 +141,13 @@
                 `<tr>
                     <td></td>
                     <td></td>
-                    <td class="text-primary">${toPay.toFixed(2)}<sup>MAD</sup></td>
+                    <td class="text-primary">${toCurrency(toPay)}</td>
                     <td></td>
                 </tr>`
             )
         }
         const addToCart = (id, quantity, reset = false) => {
-            const index = cart.findIndex(cartElement=>cartElement.productId === id)
+            const index = findCartElementIndex(id)
             if (index === -1) {
                 cart = [
                     ...cart,
@@ -147,34 +167,30 @@
             refreshCart()
         }
         const removeFromCart = id => {
-            const index = cart.findIndex(cartElement=>cartElement.productId === id)
+            const index = findCartElementIndex(id)
             if (index !== -1) {
-                //slice
                 cart.splice(index, 1)
                 refreshCart()
             }
         }
-
-
-        //
-        const productTBody = document.getElementById('product-tbody')
-        //
         const getPriceWithVat = product => {
             const {price, vat} = product
 
             return price + price * vat / 100
         }
-        const getTr = product => {
+        const toCurrency = value => `${value.toFixed(2)} MAD`
+        // Rendering
+        products.forEach(product=>{
             const {id, name, price, vat, brand:{name:brandName}, categories} = product
-            return (
+            productTBody.innerHTML += (
                 `<tr>
                     <th scope="row">${id}</th>
                     <td>${name}</td>
                     <td><span class="badge bg-primary">${brandName}</span></td>
                     <td>${categories.join(', ')}</td>
                     <td>${vat}</td>
-                    <td>${price}<sup>MAD</sup></td>
-                    <td>${getPriceWithVat(product)}<sup>MAD</sup></td>
+                    <td>${toCurrency(price)}</td>
+                    <td>${toCurrency(getPriceWithVat(product))}</td>
                     <td>
                         <button class="btn btn-outline-success btn-sm" onclick="addToCart(${id}, 1)">
                             Add to cart
@@ -182,13 +198,8 @@
                     </td>
                 </tr>`
             )
-        }
-        // Rendering
-        products.forEach(product=>{
-            productTBody.innerHTML += getTr(product)
         })
+        productCaption.innerHTML = `${products.length} product${products.length !== 0 && 's'}`
         refreshCart()
-
-
     </script>
 </html>
